@@ -1,0 +1,17 @@
+[package]
+name = "gpu"
+authors = ["Arman Uguray <arman.uguray@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+bitflags = "1.3.2"
+thiserror = "1.0.38"
+
+# wgpu backend dependencies
+wgpu = { version = "0.17", optional = true }
+
+[features]
+metal = []
+wgpu = ["dep:wgpu"]

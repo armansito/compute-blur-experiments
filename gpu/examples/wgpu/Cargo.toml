@@ -1,0 +1,17 @@
+[package]
+name = "gpu-wgpu-example"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+common = { path = "../common" }
+env_logger = { workspace = true }
+gpu = { workspace = true, features = ["wgpu"] }
+pollster = { workspace = true }
+wgpu = { workspace = true }
+winit = { workspace = true }
+
+# TODO: wasm32
