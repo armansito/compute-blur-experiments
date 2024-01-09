@@ -574,8 +574,8 @@ impl From<PixelFormat> for mtl::MTLPixelFormat {
     }
 }
 
-impl From<TextureUsage> for mtl::MTLTextureUsage {
-    fn from(src: TextureUsage) -> Self {
+impl From<&TextureUsage> for mtl::MTLTextureUsage {
+    fn from(src: &TextureUsage) -> Self {
         let mut dst = mtl::MTLTextureUsage::Unknown;
         if src.contains(TextureUsage::Sample) {
             dst |= mtl::MTLTextureUsage::ShaderRead;

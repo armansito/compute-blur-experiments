@@ -43,33 +43,6 @@ impl Backend {
 }
 
 impl Adapter for Backend {
-
-    fn upload_texture(&self, texture: &TextureHandle, data: &[u8], bytes_per_row: u32) {
-        let target = match &texture {
-            TextureHandle::Wgpu { texture, view: _ } => texture,
-            _ => panic!("expected a wgpu texture type"),
-        };
-        self.queue.write_texture(
-            wgpu::ImageCopyTexture {
-                texture: &target,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            data,
-            wgpu::ImageDataLayout {
-                offset: 0,
-                bytes_per_row: Some(bytes_per_row),
-                rows_per_image: None,
-            },
-            wgpu::Extent3d {
-                width: 512,
-                height: 512,
-                depth_or_array_layers: 1,
-            },
-        );
-    }
-
     fn submit_commands(
         &mut self,
         commands: &[Command],
@@ -180,7 +153,7 @@ impl Adapter for Backend {
             sample_count: descriptor.sample_count,
             dimension,
             format: descriptor.format.into(),
-            usage: descriptor.usage.into(),
+            usage: (&descriptor.usage).into(),
             view_formats: &[],
         });
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -803,8 +776,8 @@ impl From<StorageTextureAccess> for wgpu::StorageTextureAccess {
     }
 }
 
-impl From<TextureUsage> for wgpu::TextureUsages {
-    fn from(src: TextureUsage) -> Self {
+impl From<&TextureUsage> for wgpu::TextureUsages {
+    fn from(src: &TextureUsage) -> Self {
         let mut dst = wgpu::TextureUsages::empty();
         if src.contains(TextureUsage::CopySrc) {
             dst |= wgpu::TextureUsages::COPY_SRC;
