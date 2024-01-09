@@ -111,4 +111,8 @@ where
     ) -> Result<(), Error> {
         self.backend.submit_commands(commands, handlers)
     }
+
+    pub fn upload_texture(&self, texture: &TextureHandle, data: &[u8], bytes_per_row: u32) {
+        self.backend.upload_texture(texture, data, bytes_per_row);
+    }
 }
