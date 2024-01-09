@@ -42,6 +42,7 @@ impl Blurs {
         let render_pp = ctx.new_render_pipeline(&gpu::RenderPipelineDescriptor {
             label: None,
             topology: gpu::PrimitiveTopology::Triangle,
+            fill_mode: gpu::FillMode::Fill,
             layout: gpu::BindingLayout::IndexedByOrder(&[
                 gpu::BindingType::Sampler(gpu::SamplerBindingType::Filtering),
                 gpu::BindingType::Texture { filterable: true },
@@ -164,7 +165,7 @@ impl Blurs {
         A: gpu::Adapter,
         F: Fn() + Send + 'static,
     {
-        let needs_init = self.needs_init;
+        let _needs_init = self.needs_init;
         self.needs_init = false;
 
         let handlers = gpu::SubmitHandlers {

@@ -20,7 +20,7 @@ const UNIFORMS_STRIDE: u32 = (std::mem::size_of::<Uniforms>() as u32 + 255) & !2
 
 const G_CENTERS: [f32; 6] = [-3., 3., 3., 3., 0., -4.24];
 
-pub struct Blurs {
+pub struct Example {
     render_pp: gpu::RenderPipelineState,
     init_particles_pp: gpu::ComputePipelineState,
     simulate_pp: gpu::ComputePipelineState,
@@ -39,7 +39,7 @@ pub struct Blurs {
     needs_init: bool,
 }
 
-impl Blurs {
+impl Example {
     pub fn init<A>(
         ctx: &gpu::Context<A>,
         shaders: &str,
@@ -52,6 +52,7 @@ impl Blurs {
         let render_pp = ctx.new_render_pipeline(&gpu::RenderPipelineDescriptor {
             label: None,
             topology: gpu::PrimitiveTopology::Triangle,
+            fill_mode: gpu::FillMode::Fill,
             layout: gpu::BindingLayout::IndexedByOrder(&[gpu::BindingType::Uniform]),
             vertex_stage: gpu::VertexStage {
                 program: gpu::ProgrammableStage {
@@ -158,7 +159,7 @@ impl Blurs {
             ),
         ];
 
-        Ok(Blurs {
+        Ok(Example {
             render_pp,
             init_particles_pp,
             simulate_pp,

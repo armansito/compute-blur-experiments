@@ -5,6 +5,7 @@ pub enum BufferUsage {
     Vertex,
     VertexStorage,
     Index,
+    IndexStorage,
     Uniform,
     Storage,
 }

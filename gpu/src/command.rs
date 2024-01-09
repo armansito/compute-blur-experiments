@@ -22,7 +22,7 @@ pub struct RenderParams<'a> {
     pub bindings: BindingList<'a>,
     pub vertex_buffers: BindingList<'a>,
 
-    pub commands: &'a [RenderCommand],
+    pub commands: &'a [RenderCommand<'a>],
 }
 
 pub struct ComputeParams<'a> {
@@ -71,7 +71,7 @@ pub enum Resource<'a> {
     Sampler(&'a SamplerHandle),
 }
 
-pub enum RenderCommand {
+pub enum RenderCommand<'a> {
     Draw {
         vertex_count: u32,
         instance_count: u32,
@@ -79,6 +79,7 @@ pub enum RenderCommand {
         first_instance: u32,
     },
     DrawIndexed {
+        index_buffer: &'a Buffer,
         index_count: u32,
         instance_count: u32,
         first_index: u32,
@@ -87,7 +88,7 @@ pub enum RenderCommand {
     },
 }
 
-impl RenderCommand {
+impl<'a> RenderCommand<'a> {
     pub fn draw(vertex_count: u32) -> Self {
         RenderCommand::Draw {
             vertex_count,
@@ -97,12 +98,22 @@ impl RenderCommand {
         }
     }
 
-    pub fn draw_indexed(index_count: u32) -> Self {
+    pub fn draw_indexed(index_count: u32, index_buffer: &'a Buffer) -> Self {
         RenderCommand::DrawIndexed {
+            index_buffer,
             index_count,
             instance_count: 0,
             first_index: 0,
             base_vertex: 0,
+            first_instance: 0,
+        }
+    }
+
+    pub fn draw_instanced(vertex_count: u32, instance_count: u32) -> Self {
+        RenderCommand::Draw {
+            vertex_count,
+            instance_count,
+            first_vertex: 0,
             first_instance: 0,
         }
     }

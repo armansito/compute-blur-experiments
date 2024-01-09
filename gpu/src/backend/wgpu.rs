@@ -5,9 +5,10 @@ use crate::{
     },
     pipeline::{
         BindingLayout, BindingType, BlendComponent, BlendFactor, BlendOp,
-        ComputePipelineDescriptor, ComputePipelineHandle, ComputePipelineState, PrimitiveTopology,
-        RenderPipelineDescriptor, RenderPipelineHandle, RenderPipelineState, SamplerBindingType,
-        ShaderModule, ShaderModuleDescriptor, StorageTextureAccess, VertexFormat, VertexStepMode,
+        ComputePipelineDescriptor, ComputePipelineHandle, ComputePipelineState, FillMode,
+        PrimitiveTopology, RenderPipelineDescriptor, RenderPipelineHandle, RenderPipelineState,
+        SamplerBindingType, ShaderModule, ShaderModuleDescriptor, StorageTextureAccess,
+        VertexFormat, VertexStepMode,
     },
     resource::{
         AccessPattern, AddressMode, Buffer, BufferHandle, BufferUsage, CompareFunction, FilterMode,
@@ -282,7 +283,7 @@ impl Adapter for Backend {
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
                 unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
+                polygon_mode: descriptor.fill_mode.into(),
                 conservative: false,
             },
             depth_stencil: None,
@@ -310,12 +311,13 @@ impl Adapter for Backend {
             });
         }
         Ok(RenderPipelineState {
-            topology: descriptor.topology,
             handle: RenderPipelineHandle::Wgpu {
                 inner: self.device.create_render_pipeline(&desc),
                 bind_group_layout,
                 pipeline_layout,
             },
+            topology: descriptor.topology,
+            fill_mode: descriptor.fill_mode,
         })
     }
 
@@ -415,7 +417,7 @@ impl<'a> CommandEncoder<'a> {
                                     idx as u32,
                                     buffer.handle.as_wgpu_ref().slice(offset as u64..),
                                 ),
-                            _ => unimplemented!(),
+                            _ => panic!("Invalid vertex buffer usage: {:?}", buffer.usage),
                         },
                         _ => panic!("Invalid vertex buffer resource type: {:?}", *resource),
                     }
@@ -428,7 +430,8 @@ impl<'a> CommandEncoder<'a> {
                 inner: handle,
                 bind_group_layout,
                 pipeline_layout: _,
-            } = &pipeline.handle else {
+            } = &pipeline.handle
+            else {
                 panic!("cannot be converted to wgpu type: {:?}", pipeline.handle);
             };
             render_pass.set_pipeline(handle);
@@ -456,12 +459,29 @@ impl<'a> CommandEncoder<'a> {
                     );
                 }
                 &RenderCommand::DrawIndexed {
-                    index_count: _,
-                    instance_count: _,
-                    first_index: _,
-                    base_vertex: _,
-                    first_instance: _,
-                } => unimplemented!(),
+                    index_buffer,
+                    index_count,
+                    instance_count,
+                    first_index,
+                    base_vertex,
+                    first_instance,
+                } => {
+                    let index_buffer_offset =
+                        first_index as u64 * std::mem::size_of::<u32>() as u64;
+                    let index_buffer_len = index_count as u64 * std::mem::size_of::<u32>() as u64;
+                    render_pass.set_index_buffer(
+                        index_buffer
+                            .handle
+                            .as_wgpu_ref()
+                            .slice(index_buffer_offset..index_buffer_offset + index_buffer_len),
+                        wgpu::IndexFormat::Uint32,
+                    );
+                    render_pass.draw_indexed(
+                        0..index_count,
+                        base_vertex,
+                        first_instance..first_instance + instance_count,
+                    );
+                }
             }
         }
 
@@ -475,8 +495,12 @@ impl<'a> CommandEncoder<'a> {
             inner: handle,
             bind_group_layout,
             pipeline_layout: _,
-        } = &params.pipeline.handle else {
-            panic!("cannot be converted to wgpu type: {:?}", params.pipeline.handle);
+        } = &params.pipeline.handle
+        else {
+            panic!(
+                "cannot be converted to wgpu type: {:?}",
+                params.pipeline.handle
+            );
         };
         let bind_group =
             create_bind_group(&self.backend.device, &bind_group_layout, &params.bindings);
@@ -538,6 +562,11 @@ fn usage_for_buffer(usage: &BufferUsage) -> wgpu::BufferUsages {
         }
         BufferUsage::Index => {
             usages.toggle(wgpu::BufferUsages::INDEX);
+            usages.toggle(wgpu::BufferUsages::COPY_DST);
+        }
+        BufferUsage::IndexStorage => {
+            usages.toggle(wgpu::BufferUsages::INDEX);
+            usages.toggle(wgpu::BufferUsages::STORAGE);
             usages.toggle(wgpu::BufferUsages::COPY_DST);
         }
         BufferUsage::Uniform => {
@@ -762,6 +791,15 @@ impl From<PrimitiveTopology> for wgpu::PrimitiveTopology {
             PrimitiveTopology::LineStrip => wgpu::PrimitiveTopology::LineStrip,
             PrimitiveTopology::Triangle => wgpu::PrimitiveTopology::TriangleList,
             PrimitiveTopology::TriangleStrip => wgpu::PrimitiveTopology::TriangleStrip,
+        }
+    }
+}
+
+impl From<FillMode> for wgpu::PolygonMode {
+    fn from(src: FillMode) -> Self {
+        match src {
+            FillMode::Fill => wgpu::PolygonMode::Fill,
+            FillMode::Lines => wgpu::PolygonMode::Line,
         }
     }
 }

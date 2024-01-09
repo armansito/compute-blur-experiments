@@ -5,8 +5,9 @@ use crate::{
     },
     pipeline::{
         BlendFactor, BlendOp, ComputePipelineDescriptor, ComputePipelineHandle,
-        ComputePipelineState, PrimitiveTopology, RenderPipelineDescriptor, RenderPipelineHandle,
-        RenderPipelineState, ShaderModule, ShaderModuleDescriptor, VertexFormat, VertexStepMode,
+        ComputePipelineState, FillMode, PrimitiveTopology, RenderPipelineDescriptor,
+        RenderPipelineHandle, RenderPipelineState, ShaderModule, ShaderModuleDescriptor,
+        VertexFormat, VertexStepMode,
     },
     resource::{
         AccessPattern, AddressMode, Buffer, BufferHandle, BufferUsage, CompareFunction, FilterMode,
@@ -158,7 +159,7 @@ impl Adapter for Backend {
         desc.set_mipmap_level_count(descriptor.mip_level_count.into());
         desc.set_sample_count(descriptor.sample_count.into());
         desc.set_pixel_format(descriptor.format.into());
-        desc.set_usage(descriptor.usage.into());
+        desc.set_usage((&descriptor.usage).into());
         // TODO: set the storage mode based on GPU capabilities and a client-provided hint.
         desc.set_storage_mode(mtl::MTLStorageMode::Private);
 
@@ -282,8 +283,9 @@ impl Adapter for Backend {
         self.device
             .new_render_pipeline_state(&desc)
             .map(|handle| RenderPipelineState {
-                topology: descriptor.topology,
                 handle: RenderPipelineHandle::Metal(handle),
+                topology: descriptor.topology,
+                fill_mode: descriptor.fill_mode,
             })
             .map_err(Error::PipelineCreation)
     }
@@ -379,6 +381,7 @@ impl<'a> CommandBuffer<'a> {
         let topology = match params.pipeline {
             Some(pipeline) => {
                 encoder.set_render_pipeline_state(pipeline.handle.as_metal_ref());
+                encoder.set_triangle_fill_mode(pipeline.fill_mode.into());
                 Some(pipeline.topology)
             }
             None => None,
@@ -476,24 +479,35 @@ impl<'a> CommandBuffer<'a> {
                         }
                     }
                     &RenderCommand::DrawIndexed {
-                        index_count: _,
-                        instance_count: _,
-                        first_index: _,
-                        base_vertex: _,
-                        first_instance: _,
-                    } => unimplemented!(),
-                    /*} => {
-                        /* TODO: need to store an index buffer handle somewhere in the render pass
-                         * descriptor to pass the to the API call.
+                        index_buffer,
+                        index_count,
+                        instance_count,
+                        first_index,
+                        base_vertex,
+                        first_instance,
+                    } => {
+                        let index_buffer_offset = first_index * std::mem::size_of::<u32>() as u32;
                         if instance_count == 0 {
                             encoder.draw_indexed_primitives(
                                 primitive,
                                 index_count.into(),
-                                mtl::MTLIndexType::UInt16,  // TODO: make this configurable via
-                                                            // primitive state
-
-                        }*/
-                    }*/
+                                mtl::MTLIndexType::UInt32,
+                                index_buffer.handle.as_metal_ref(),
+                                index_buffer_offset.into(),
+                            );
+                        } else {
+                            encoder.draw_indexed_primitives_instanced_base_instance(
+                                primitive,
+                                index_count.into(),
+                                mtl::MTLIndexType::UInt32,
+                                index_buffer.handle.as_metal_ref(),
+                                index_buffer_offset.into(),
+                                instance_count.into(),
+                                base_vertex.into(),
+                                first_instance.into(),
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -567,6 +581,7 @@ impl From<PixelFormat> for mtl::MTLPixelFormat {
     fn from(src: PixelFormat) -> Self {
         match src {
             PixelFormat::BGRA8Unorm => mtl::MTLPixelFormat::BGRA8Unorm,
+            PixelFormat::RGBA8Unorm => mtl::MTLPixelFormat::RGBA8Unorm,
             PixelFormat::BGRA8Unorm_sRGB => mtl::MTLPixelFormat::BGRA8Unorm_sRGB,
             PixelFormat::RGBA16Float => mtl::MTLPixelFormat::RGBA16Float,
             PixelFormat::RGBA32Float => mtl::MTLPixelFormat::RGBA32Float,
@@ -598,6 +613,15 @@ impl From<PrimitiveTopology> for mtl::MTLPrimitiveType {
             PrimitiveTopology::LineStrip => mtl::MTLPrimitiveType::LineStrip,
             PrimitiveTopology::Triangle => mtl::MTLPrimitiveType::Triangle,
             PrimitiveTopology::TriangleStrip => mtl::MTLPrimitiveType::TriangleStrip,
+        }
+    }
+}
+
+impl From<FillMode> for mtl::MTLTriangleFillMode {
+    fn from(src: FillMode) -> Self {
+        match src {
+            FillMode::Fill => mtl::MTLTriangleFillMode::Fill,
+            FillMode::Lines => mtl::MTLTriangleFillMode::Lines,
         }
     }
 }

@@ -88,6 +88,12 @@ pub enum PrimitiveTopology {
     TriangleStrip,
 }
 
+#[derive(Copy, Clone)]
+pub enum FillMode {
+    Fill,
+    Lines,
+}
+
 pub struct ProgrammableStage<'a> {
     pub module: &'a ShaderModule,
     pub entry_point: &'a str,
@@ -172,14 +178,16 @@ pub struct FragmentStage<'a> {
 pub struct RenderPipelineDescriptor<'a> {
     pub label: Option<&'static str>,
     pub topology: PrimitiveTopology,
+    pub fill_mode: FillMode,
     pub layout: BindingLayout<'a>,
     pub vertex_stage: VertexStage<'a>,
     pub fragment_stage: Option<FragmentStage<'a>>,
 }
 
 pub struct RenderPipelineState {
-    pub topology: PrimitiveTopology,
     pub handle: RenderPipelineHandle,
+    pub topology: PrimitiveTopology,
+    pub fill_mode: FillMode,
 }
 
 pub struct ComputePipelineDescriptor<'a> {
