@@ -181,7 +181,7 @@ impl Adapter for Backend {
             sample_count: descriptor.sample_count,
             dimension,
             format: descriptor.format.into(),
-            usage: descriptor.usage.into(),
+            usage: (&descriptor.usage).into(),
             view_formats: &[],
         });
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -841,8 +841,8 @@ impl From<StorageTextureAccess> for wgpu::StorageTextureAccess {
     }
 }
 
-impl From<TextureUsage> for wgpu::TextureUsages {
-    fn from(src: TextureUsage) -> Self {
+impl From<&TextureUsage> for wgpu::TextureUsages {
+    fn from(src: &TextureUsage) -> Self {
         let mut dst = wgpu::TextureUsages::empty();
         if src.contains(TextureUsage::CopySrc) {
             dst |= wgpu::TextureUsages::COPY_SRC;
