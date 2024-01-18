@@ -120,5 +120,7 @@ fn vs_main(@builtin(vertex_index) VertexIndex : u32) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) fragUV : vec2<f32>) -> @location(0) vec4<f32> {
+//fn fs_main(@builtin(position) pos: vec4f, @location(0) uv: vec2f) -> @location(0) vec4<f32> {
   return textureSample(myTexture, mySampler, fragUV);
+  //return textureLoad(myTexture, vec2u(pos.xy / 3.), 0);
 }

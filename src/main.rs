@@ -1,7 +1,7 @@
 use {
     anyhow::{Context, Result},
     winit::{
-        event::{Event, WindowEvent},
+        event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
         window::Window,
     },
@@ -28,7 +28,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) -> Result<()> {
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: None,
-                features: wgpu::Features::empty(),
+                features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
                 limits: wgpu::Limits::default().using_resolution(adapter.limits()),
             },
             None,
@@ -54,7 +54,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) -> Result<()> {
         format: swapchain_format,
         width: size.width,
         height: size.height,
-        present_mode: wgpu::PresentMode::AutoVsync,
+        present_mode: wgpu::PresentMode::AutoNoVsync,
         alpha_mode: swapchain_capabilities.alpha_modes[0],
         view_formats: vec![],
     };
@@ -83,6 +83,19 @@ async fn run(event_loop: EventLoop<()>, window: Window) -> Result<()> {
                     // On macos the window needs to be redrawn manually after resizing
                     window.request_redraw();
                 }
+                WindowEvent::KeyboardInput { input, .. } => {
+                    if input.state == ElementState::Pressed {
+                        match input.virtual_keycode {
+                            Some(VirtualKeyCode::Up) => {
+                                example.adjust_fft_filter_up(1);
+                            }
+                            Some(VirtualKeyCode::Down) => {
+                                example.adjust_fft_filter_down(1);
+                            }
+                            _ => (),
+                        }
+                    }
+                }
                 _ => (),
             },
             Event::MainEventsCleared => {
@@ -95,7 +108,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) -> Result<()> {
                 let render_target = frame
                     .texture
                     .create_view(&wgpu::TextureViewDescriptor::default());
-                if let Err(e) = example.render_frame(
+                if let Err(e) = example.render_fft_blur(
                     &mut ctx,
                     &gpu::TextureHandle::WgpuView(render_target),
                     move || {},
