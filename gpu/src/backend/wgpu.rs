@@ -45,7 +45,7 @@ impl Backend {
 
 impl Adapter for Backend {
 
-    fn upload_texture(&self, texture: &TextureHandle, data: &[u8], bytes_per_row: u32) {
+    fn upload_texture(&self, texture: &TextureHandle, data: &[u8], width: u32, height: u32, bytes_per_row: u32) {
         let target = match &texture {
             TextureHandle::Wgpu { texture, view: _ } => texture,
             _ => panic!("expected a wgpu texture type"),
@@ -64,8 +64,8 @@ impl Adapter for Backend {
                 rows_per_image: None,
             },
             wgpu::Extent3d {
-                width: 512,
-                height: 512,
+                width,
+                height,
                 depth_or_array_layers: 1,
             },
         );

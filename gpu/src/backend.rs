@@ -46,5 +46,5 @@ pub trait Adapter {
         descriptor: &ComputePipelineDescriptor,
     ) -> Result<ComputePipelineState, Error>;
 
-    fn upload_texture(&self, texture: &TextureHandle, data: &[u8], bytes_per_row: u32);
+    fn upload_texture(&self, texture: &TextureHandle, data: &[u8], width: u32, height: u32, bytes_per_row: u32);
 }

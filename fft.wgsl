@@ -1,4 +1,4 @@
-// TODO: put attribution about porting
+// This compute program was largely inspired by https://github.com/bane9/OpenGLFFT
 
 const WORKGROUP_SIZE_X: u32 = 256u;
 const PIXEL_BUFFER_SIZE: u32 = 32u;

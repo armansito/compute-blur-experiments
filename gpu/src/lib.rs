@@ -112,7 +112,7 @@ where
         self.backend.submit_commands(commands, handlers)
     }
 
-    pub fn upload_texture(&self, texture: &TextureHandle, data: &[u8], bytes_per_row: u32) {
-        self.backend.upload_texture(texture, data, bytes_per_row);
+    pub fn upload_texture(&self, texture: &TextureHandle, data: &[u8], width: u32, height: u32, bytes_per_row: u32) {
+        self.backend.upload_texture(texture, data, width, height, bytes_per_row);
     }
 }

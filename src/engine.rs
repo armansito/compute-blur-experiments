@@ -183,7 +183,7 @@ impl Blurs {
         })?;
 
         let img = image::open(&Path::new(
-            "/Users/armansito/Code/personal/blur-experiments/images/mandrill_512.png",
+            "/Users/armansito/Code/personal/blur-experiments/images/mandrill_1600.png",
         ))?;
         //let img = image::open(&Path::new("/Users/armansito/Code/personal/blur-experiments/images/bunny.png"))?;
         let img = img.into_rgba8();
@@ -196,7 +196,7 @@ impl Blurs {
             format: gpu::PixelFormat::RGBA8Unorm,
             usage: gpu::TextureUsage::Sample | gpu::TextureUsage::CopyDst,
         });
-        ctx.upload_texture(&src_texture, img.as_bytes(), width * 4);
+        ctx.upload_texture(&src_texture, img.as_bytes(), width, height, width * 4);
 
         let blur_textures = [
             ctx.new_texture(&gpu::TextureDescriptor {
@@ -221,7 +221,7 @@ impl Blurs {
             None,
         ));
 
-        let filter_dim = 32;
+        let filter_dim = 64;
         let uniforms = Uniforms {
             filter_dim,
             block_dim: TILE_DIM - (filter_dim - 1),
@@ -308,10 +308,14 @@ impl Blurs {
 
     pub fn adjust_fft_filter_up(&mut self, val: u32) {
         self.fft_blur_value = self.fft_blur_value.saturating_add(val);
+        self.uniforms.filter_dim = self.uniforms.filter_dim.saturating_add(val).min(TILE_DIM);
+        self.uniforms.block_dim = TILE_DIM - (self.uniforms.filter_dim - 1);
     }
 
     pub fn adjust_fft_filter_down(&mut self, val: u32) {
         self.fft_blur_value = self.fft_blur_value.saturating_sub(val);
+        self.uniforms.filter_dim = self.uniforms.filter_dim.saturating_sub(val).min(TILE_DIM);
+        self.uniforms.block_dim = TILE_DIM - (self.uniforms.filter_dim - 1);
     }
 
     pub fn render_simple_blur<A, F>(
@@ -332,8 +336,8 @@ impl Blurs {
             completion: None,
         };
         let workgroup_count = gpu::WorkgroupExtent::new(
-            (512 + self.uniforms.block_dim - 1) / self.uniforms.block_dim,
-            512 / 4,
+            (self.fft_uniforms.input_width + self.uniforms.block_dim - 1) / self.uniforms.block_dim,
+            self.fft_uniforms.input_height / 4,
             1,
         );
         ctx.submit(
