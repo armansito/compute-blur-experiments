@@ -183,7 +183,7 @@ impl Blurs {
         })?;
 
         let img = image::open(&Path::new(
-            "/Users/armansito/Code/personal/blur-experiments/images/mandrill_1600.png",
+            "/Users/armansito/Code/personal/blur-experiments/images/mandrill_1024.png",
         ))?;
         //let img = image::open(&Path::new("/Users/armansito/Code/personal/blur-experiments/images/bunny.png"))?;
         let img = img.into_rgba8();
