@@ -144,17 +144,17 @@ fn store_stage3(btid: i32, g_offset: i32, scanline: i32, N: f32) {
 }
 
 fn load_into_cache(btid: i32, g_offset: i32, channel: i32) {
-	for(var i = btid * 2; i < btid * 2 + g_offset * 2; i += 1) {
-		real_cache[i] = pixel_buffer_real[i - btid * 2][channel];
-		imag_cache[i] = pixel_buffer_imag[i - btid * 2][channel];
-	}
+  for(var i = btid * 2; i < btid * 2 + g_offset * 2; i += 1) {
+    real_cache[i] = pixel_buffer_real[i - btid * 2][channel];
+    imag_cache[i] = pixel_buffer_imag[i - btid * 2][channel];
+  }
 }
 
 fn load_from_cache(btid: i32, g_offset: i32, channel: i32) {
-	for(var i = btid * 2; i < btid * 2 + g_offset * 2; i += 1) {
-		pixel_buffer_real[i - btid * 2][channel] = real_cache[i];
-		pixel_buffer_imag[i - btid * 2][channel] = imag_cache[i];
-	}
+  for(var i = btid * 2; i < btid * 2 + g_offset * 2; i += 1) {
+    pixel_buffer_real[i - btid * 2][channel] = real_cache[i];
+    pixel_buffer_imag[i - btid * 2][channel] = imag_cache[i];
+  }
 }
 
 @compute @workgroup_size(256, 1, 1)
