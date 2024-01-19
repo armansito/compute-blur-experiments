@@ -92,6 +92,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) -> Result<()> {
                             Some(VirtualKeyCode::Down) => {
                                 example.adjust_fft_filter_down(1);
                             }
+                            Some(VirtualKeyCode::Right) => {
+                                example.adjust_fft_filter_up(10);
+                            }
+                            Some(VirtualKeyCode::Left) => {
+                                example.adjust_fft_filter_down(10);
+                            }
                             _ => (),
                         }
                     }
